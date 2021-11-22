@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" 
+xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+    <flow name="getAccountsSFDB" doc:id="a7234111-a0ab-4dd3-b750-a4b382d1de57" >
+    		<salesforce:query doc:name="Query Accounts from Salesforce"
+			doc:id="0a4e489e-af9f-4de3-971c-f2c1ab5659a1" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query><![CDATA[SELECT AccountNumber, AccountSource, AnnualRevenue, BillingCity, BillingCountry,
+ BillingPostalCode, BillingState, BillingStreet, Description, Fax, Id,ExtId__c, Industry, 
+ LastModifiedById, LastModifiedDate, Name, NumberOfEmployees, OwnerId, Ownership, ParentId,
+  Phone, Rating, ShippingCity, ShippingCountry, ShippingPostalCode, ShippingState, ShippingStreet,
+   Sic, SicDesc, Site, TickerSymbol, Type, Website FROM Account 
+   WHERE LastModifiedDate >  :lastModifiedDate  ORDER BY LastModifiedDate ASC LIMIT 300]]></salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[output application/java
+---
+{
+	"lastModifiedDate" : attributes.queryParams.lastModifiedDate
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="fbf9dd64-a7c4-409b-bffa-4ec266751660">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+    
+    
+</flow>
+	<flow name="upsertSF" doc:id="8ba0d5e2-6100-4cc9-8574-ee9cbcc8468b" >
+		<salesforce:upsert doc:name="Upsert" doc:id="0d2e8c6a-e1d9-44f1-8503-b5ee857a704f" config-ref="Salesforce_Config" objectType="Account" externalIdFieldName="Id"/>
+	
+</flow>
+</mule>
